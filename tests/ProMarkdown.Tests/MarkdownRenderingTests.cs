@@ -1416,6 +1416,38 @@ public sealed class MarkdownRenderingTests
     }
 
     [AvaloniaFact]
+    public void AutoSizedControlWrapsAgainstAvailableWidthNotItsOwnNarrowBounds()
+    {
+        var control = CreateMarkdown("A");
+        control.HorizontalAlignment = HorizontalAlignment.Left;
+        var window = new Window { Width = 600, Height = 200, Content = control };
+        window.Show();
+        try
+        {
+            window.UpdateLayout();
+            var narrowBoundsWidth = control.Bounds.Width;
+            narrowBoundsWidth.ShouldBeLessThan(100);
+
+            const string text = "This paragraph must wrap against the window's available width, not the " +
+                "tiny bounds the control measured before it had any real content to size against.";
+            control.Markdown = text;
+            window.UpdateLayout();
+            MarkdownDocumentLayout.Flush(control);
+            window.UpdateLayout();
+
+            var paragraph = MarkdownDocumentSelection.GetSegmentControls(control)
+                .Single(segment => GetText(segment) == text);
+
+            paragraph.MaxWidth.ShouldBeGreaterThan(narrowBoundsWidth + 200);
+            control.Bounds.Width.ShouldBeGreaterThan(narrowBoundsWidth + 200);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void ThematicBreaksStretchAndRoundedBordersKeepTheirStrokeUnclipped()
     {
         var control = CreateMarkdown("---\n\n| A |\n|---|\n| B |\n\n~~~text\nvalue\n~~~");

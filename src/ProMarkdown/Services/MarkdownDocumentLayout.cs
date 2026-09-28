@@ -113,7 +113,7 @@ internal static class MarkdownDocumentLayout
 
         private void ApplyCurrentWidth()
         {
-            var width = _owner.Bounds.Width - _owner.Padding.Left - _owner.Padding.Right;
+            var width = _owner.LayoutWidth - _owner.Padding.Left - _owner.Padding.Right;
             if (!double.IsFinite(width) || width <= 0 ||
                 Math.Abs(_lastAppliedWidth - width) <= WidthTolerance)
             {
