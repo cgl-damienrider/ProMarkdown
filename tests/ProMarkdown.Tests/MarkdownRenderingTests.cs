@@ -2361,6 +2361,42 @@ public sealed class MarkdownRenderingTests
     }
 
     [AvaloniaFact]
+    public void FencedCodeBlockRecoversFullWrapWidthAfterATransientNarrowLayout()
+    {
+        var control = CreateMarkdown("```shell\ndotnet run\n```");
+        var window = new Window { Width = 900, Height = 200, Content = control };
+        window.Show();
+        try
+        {
+            window.UpdateLayout();
+            var codeText = control.GetVisualDescendants()
+                .OfType<SelectableTextBlock>()
+                .Single(block => GetText(block) == "dotnet run");
+            var wideWidth = codeText.MaxWidth;
+            wideWidth.ShouldBeGreaterThan(400);
+
+            // Simulate an inspection pane opening then closing: the available width narrows
+            // transiently (capturing a small Bounds.Width on the code block's header/body Border
+            // rows) and then returns to its original value.
+            window.Width = 320;
+            window.UpdateLayout();
+            MarkdownDocumentLayout.Flush(control);
+            window.UpdateLayout();
+
+            window.Width = 900;
+            window.UpdateLayout();
+            MarkdownDocumentLayout.Flush(control);
+            window.UpdateLayout();
+
+            codeText.MaxWidth.ShouldBeGreaterThan(wideWidth - 1);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void CopyAcrossTableCellsPreservesRowsAndColumns()
     {
         var control = CreateMarkdown("| Component | Version |\n|---|---|\n| Desktop | 1.2.3 |");
